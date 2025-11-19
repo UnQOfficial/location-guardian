@@ -1,19 +1,31 @@
 import { LocationData, StatsData } from '@/types';
+import { saveLocationsToDrive, loadLocationsFromDrive } from './googleDrive';
 
 const STORAGE_KEY = 'unqtraker_locations';
 const MAX_LOCATIONS = 200;
+const USE_GOOGLE_DRIVE = true;
 
-export const saveLocation = (location: LocationData): void => {
+export const saveLocation = async (location: LocationData): Promise<void> => {
   try {
-    const existing = getLocations();
+    const existing = await getLocations();
     const updated = [location, ...existing].slice(0, MAX_LOCATIONS);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    
+    if (USE_GOOGLE_DRIVE) {
+      try {
+        await saveLocationsToDrive(updated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch (driveError) {
+        console.warn('Drive save failed, using localStorage:', driveError);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
   } catch (error) {
     console.error('Failed to save location:', error);
     
-    // Try to clear old data and retry
     try {
-      const existing = getLocations();
+      const existing = await getLocations();
       const reduced = [location, ...existing.slice(0, 50)];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(reduced));
     } catch (retryError) {
@@ -22,8 +34,20 @@ export const saveLocation = (location: LocationData): void => {
   }
 };
 
-export const getLocations = (): LocationData[] => {
+export const getLocations = async (): Promise<LocationData[]> => {
   try {
+    if (USE_GOOGLE_DRIVE) {
+      try {
+        const driveData = await loadLocationsFromDrive();
+        if (driveData.length > 0) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(driveData));
+          return driveData;
+        }
+      } catch (driveError) {
+        console.warn('Drive load failed, using localStorage:', driveError);
+      }
+    }
+    
     const data = localStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
@@ -32,27 +56,44 @@ export const getLocations = (): LocationData[] => {
   }
 };
 
-export const deleteLocation = (id: string): void => {
+export const deleteLocation = async (id: string): Promise<void> => {
   try {
-    const existing = getLocations();
+    const existing = await getLocations();
     const filtered = existing.filter(loc => loc.id !== id);
+    
+    if (USE_GOOGLE_DRIVE) {
+      try {
+        await saveLocationsToDrive(filtered);
+      } catch (driveError) {
+        console.warn('Drive delete failed:', driveError);
+      }
+    }
+    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
   } catch (error) {
     console.error('Failed to delete location:', error);
   }
 };
 
-export const clearAllLocations = (): void => {
+export const clearAllLocations = async (): Promise<void> => {
   try {
+    if (USE_GOOGLE_DRIVE) {
+      try {
+        await saveLocationsToDrive([]);
+      } catch (driveError) {
+        console.warn('Drive clear failed:', driveError);
+      }
+    }
+    
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     console.error('Failed to clear locations:', error);
   }
 };
 
-export const exportLocations = (): void => {
+export const exportLocations = async (): Promise<void> => {
   try {
-    const locations = getLocations();
+    const locations = await getLocations();
     const blob = new Blob([JSON.stringify(locations, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -68,8 +109,8 @@ export const exportLocations = (): void => {
   }
 };
 
-export const getStats = (): StatsData => {
-  const locations = getLocations();
+export const getStats = async (): Promise<StatsData> => {
+  const locations = await getLocations();
   const uniqueSessions = new Set(locations.map(loc => loc.sessionId)).size;
   const storageUsed = new Blob([localStorage.getItem(STORAGE_KEY) || '']).size;
   const storageUsageKB = (storageUsed / 1024).toFixed(2);

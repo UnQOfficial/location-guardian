@@ -25,7 +25,11 @@ const MapView = () => {
   const [locations, setLocations] = useState<LocationData[]>([]);
 
   useEffect(() => {
-    setLocations(getLocations());
+    const loadLocations = async () => {
+      const data = await getLocations();
+      setLocations(data);
+    };
+    loadLocations();
   }, []);
 
   if (locations.length === 0) {

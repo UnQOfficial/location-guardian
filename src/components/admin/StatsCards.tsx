@@ -14,8 +14,8 @@ const StatsCards = () => {
   });
 
   useEffect(() => {
-    const updateStats = () => {
-      const newStats = getStats();
+    const updateStats = async () => {
+      const newStats = await getStats();
       setStats(newStats);
     };
 
