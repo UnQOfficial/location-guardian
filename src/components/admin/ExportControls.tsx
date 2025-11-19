@@ -35,9 +35,9 @@ const ExportControls = () => {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     try {
-      const locations = getLocations();
+      const locations = await getLocations();
       exportToCSV(locations);
       toast.success('CSV data exported successfully!');
     } catch (error) {
@@ -45,9 +45,9 @@ const ExportControls = () => {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
-      const locations = getLocations();
+      const locations = await getLocations();
       exportToPDF(locations);
       toast.success('PDF report exported successfully!');
     } catch (error) {
@@ -55,9 +55,9 @@ const ExportControls = () => {
     }
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
     try {
-      clearAllLocations();
+      await clearAllLocations();
       setShowClearDialog(false);
       toast.success('All data cleared successfully!');
       window.location.reload();

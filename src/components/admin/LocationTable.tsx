@@ -22,8 +22,8 @@ const LocationTable = () => {
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
 
   useEffect(() => {
-    const loadLocations = () => {
-      const data = getLocations();
+    const loadLocations = async () => {
+      const data = await getLocations();
       setLocations(data);
     };
 
@@ -32,9 +32,9 @@ const LocationTable = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      deleteLocation(id);
+      await deleteLocation(id);
       setLocations(locations.filter(loc => loc.id !== id));
       toast.success('Location deleted successfully');
     } catch (error) {

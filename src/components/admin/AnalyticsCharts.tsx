@@ -9,7 +9,11 @@ const AnalyticsCharts = () => {
   const [locations, setLocations] = useState<LocationData[]>([]);
 
   useEffect(() => {
-    setLocations(getLocations());
+    const loadLocations = async () => {
+      const data = await getLocations();
+      setLocations(data);
+    };
+    loadLocations();
   }, []);
 
   // Browser distribution

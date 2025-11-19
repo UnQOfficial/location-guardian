@@ -1,54 +1,67 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Shield, Settings, MapPin, BarChart3 } from 'lucide-react';
+import { AlertTriangle, Shield, Settings, MapPin, BarChart3, LogOut, User } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import StatsCards from '@/components/admin/StatsCards';
 import LocationTable from '@/components/admin/LocationTable';
 import ExportControls from '@/components/admin/ExportControls';
 import ConfigurationPanel from '@/components/admin/ConfigurationPanel';
 import MapView from '@/components/admin/MapView';
 import AnalyticsCharts from '@/components/admin/AnalyticsCharts';
+import SyncStatus from '@/components/admin/SyncStatus';
 import Footer from '@/components/admin/Footer';
 
 const AdminPage = () => {
-  const [isLocalhost, setIsLocalhost] = useState(true);
-
-  useEffect(() => {
-    const hostname = window.location.hostname;
-    setIsLocalhost(
-      hostname === 'localhost' || 
-      hostname === '127.0.0.1' || 
-      hostname === '[::1]' ||
-      hostname.endsWith('.lovableproject.com')
-    );
-  }, []);
+  const { user, logout } = useGoogleAuth();
+  const [syncStatus, setSyncStatus] = useState({ isSyncing: false, lastSync: null as string | null, error: null as string | null });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <div className="container mx-auto p-4 md:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header with User Profile */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 p-3 rounded-xl">
               <Shield className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">UnQTraker Admin</h1>
-              <p className="text-muted-foreground">Location Intelligence Dashboard</p>
+              <h1 className="text-3xl font-bold text-white">UnQTraker Admin</h1>
+              <p className="text-slate-400">Location Intelligence Dashboard</p>
             </div>
           </div>
+          
+          <div className="flex items-center gap-4">
+            <SyncStatus {...syncStatus} />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 hover:bg-slate-800 p-2 rounded-lg transition-colors">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-white">{user?.name}</p>
+                    <p className="text-xs text-slate-400">{user?.email}</p>
+                  </div>
+                  <Avatar>
+                    <AvatarImage src={user?.picture} />
+                    <AvatarFallback><User /></AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={logout} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-
-        {/* Localhost Warning */}
-        {!isLocalhost && (
-          <Alert variant="destructive" className="border-destructive/50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Warning:</strong> Admin dashboard is restricted to localhost only. 
-              You are currently accessing from a remote location. Some features may be restricted.
-            </AlertDescription>
-          </Alert>
-        )}
 
         {/* Stats Cards */}
         <StatsCards />
