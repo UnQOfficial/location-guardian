@@ -4,8 +4,15 @@ import App from "./App.tsx";
 import "./index.css";
 import { GOOGLE_CONFIG } from './config/google';
 
+// Check if Google OAuth credentials are configured
+const hasGoogleCredentials = GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.clientId.length > 0;
+
 createRoot(document.getElementById("root")!).render(
-  <GoogleOAuthProvider clientId={GOOGLE_CONFIG.clientId}>
+  hasGoogleCredentials ? (
+    <GoogleOAuthProvider clientId={GOOGLE_CONFIG.clientId}>
+      <App />
+    </GoogleOAuthProvider>
+  ) : (
     <App />
-  </GoogleOAuthProvider>
+  )
 );

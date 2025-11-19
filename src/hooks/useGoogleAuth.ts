@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { toast } from 'sonner';
+import { GOOGLE_CONFIG } from '@/config/google';
 
 interface GoogleUser {
   email: string;
@@ -8,6 +9,8 @@ interface GoogleUser {
   picture: string;
   sub: string;
 }
+
+const hasGoogleCredentials = GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.clientId.length > 0;
 
 export const useGoogleAuth = () => {
   const [user, setUser] = useState<GoogleUser | null>(null);
@@ -44,7 +47,7 @@ export const useGoogleAuth = () => {
     }
   }, [accessToken]);
 
-  const login = useGoogleLogin({
+  const login = hasGoogleCredentials ? useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setAccessToken(tokenResponse.access_token);
       localStorage.setItem('unqtraker_token', tokenResponse.access_token);
@@ -67,7 +70,9 @@ export const useGoogleAuth = () => {
       toast.error('Google login failed');
     },
     scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata'
-  });
+  }) : () => {
+    toast.error('Google OAuth not configured');
+  };
 
   const logout = () => {
     googleLogout();
