@@ -3,17 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MapPin, Shield, CloudUpload } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MapPin, Shield, CloudUpload, AlertTriangle } from 'lucide-react';
+import { GOOGLE_CONFIG } from '@/config/google';
 
 const LoginPage = () => {
   const { isAuthenticated, isLoading, login } = useGoogleAuth();
   const navigate = useNavigate();
+  const hasCredentials = GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.clientId.length > 0;
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/admin');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    // Redirect to setup if no credentials
+    if (!hasCredentials) {
+      navigate('/setup');
+    }
+  }, [hasCredentials, navigate]);
 
   if (isLoading) {
     return (
@@ -42,11 +52,21 @@ const LoginPage = () => {
           </p>
         </div>
 
+        {!hasCredentials && (
+          <Alert className="border-yellow-500/50 bg-yellow-500/10">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-yellow-200">
+              Google OAuth is not configured. Redirecting to setup...
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           <Button 
             onClick={() => login()} 
             className="w-full gap-2 h-12 text-base"
             size="lg"
+            disabled={!hasCredentials}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
